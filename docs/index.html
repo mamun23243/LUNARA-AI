@@ -1209,10 +1209,9 @@ function renderUsage(){
 
 /* ============ INIT ============ */
 function renderNav(){
-  $("navAuth").innerHTML = user
-    ? `<button class="btn" onclick="enterApp()">Open App</button>`
-    : `<button class="btn btn-ghost" onclick="openAuthMode('login')">Log in</button>
-       <button class="btn" onclick="openAuthMode('register')">Sign up</button>`;
+  $("navAuth").innerHTML =
+    `<button class="btn btn-ghost" onclick="openAuthMode('login')">Log in</button>
+     <button class="btn" onclick="openAuthMode('register')">Sign up</button>`;
 }
 initReferral();
 renderNav();
