@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="bn" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>LUNARA AI — A companion who is always there.</title>
+<meta name="description" content="Talk, laugh, share your thoughts, and build a unique AI relationship.">
+<meta name="theme-color" content="#08090D">
+<style>
+/* ==================== DESIGN SYSTEM ==================== */
+:root{
+  --bg:#08090D; --bg2:#11131A; --primary:#8B5CF6; --accent:#EC4899;
+  --highlight:#06B6D4; --text:#FFFFFF; --muted:#9CA3AF;
+  --glass:rgba(255,255,255,.04); --glass-border:rgba(255,255,255,.08);
+  --radius:1rem; --glow:0 0 40px rgba(139,92,246,.15);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;border:none;font:inherit}
+input,textarea,select{font:inherit}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#2a2d3a;border-radius:99px}
+::-webkit-scrollbar-track{background:transparent}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.glass{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);backdrop-filter:blur(12px)}
+.glass-h{transition:transform .2s,box-shadow .2s,border-color .2s}
+.glass-h:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.4);box-shadow:var(--glow)}
+.gtext{background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.btn{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-radius:.85rem;padding:.7rem 1.4rem;font-weight:600;transition:opacity .15s,transform .15s;display:inline-flex;align-items:center;gap:.5rem;justify-content:center}
+.btn:hover{opacity:.9}.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:var(--glass);border:1px solid var(--glass-border);color:var(--text)}
+.inp{background:var(--bg2);border:1px solid var(--glass-border);border-radius:.85rem;padding:.7rem .9rem;color:var(--text);width:100%}
+.inp:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(139,92,246,.2)}
+.muted{color:var(--muted)}
+.msg-in{animation:msgIn .25s ease-out}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:bdt 1.2s infinite;display:inline-block}
+.dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
+@keyframes bdt{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.fade{animation:fade .3s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* ==================== COMPANION ANIMATION ==================== */
+.companion-stage{position:relative;min-height:240px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;background:radial-gradient(circle at 50% 80%,rgba(139,92,246,.20),transparent 58%),linear-gradient(180deg,rgba(8,9,13,.05),rgba(8,9,13,.65));border-bottom:1px solid var(--glass-border)}
+.companion-stage::before{content:"";position:absolute;width:220px;height:42px;bottom:12px;border-radius:50%;background:rgba(0,0,0,.42);filter:blur(12px);animation:shadowPulse 3.4s ease-in-out infinite}
+.companion-art{position:relative;width:min(210px,58vw);height:230px;object-fit:cover;object-position:center top;border-radius:110px 110px 28px 28px;box-shadow:0 18px 55px rgba(139,92,246,.28);transform-origin:50% 85%;animation:companionIdle 4.2s ease-in-out infinite;transition:filter .35s,transform .35s,box-shadow .35s}
+.companion-art::after{content:"";position:absolute;inset:0}
+.companion-stage.mood-happy .companion-art{animation:companionHappy 1.1s ease-in-out infinite;box-shadow:0 18px 70px rgba(236,72,153,.38)}
+.companion-stage.mood-shy .companion-art{animation:companionShy 1.8s ease-in-out infinite;filter:saturate(1.08) brightness(1.04)}
+.companion-stage.mood-sad .companion-art{animation:companionSad 3.2s ease-in-out infinite;filter:saturate(.75) brightness(.88)}
+.companion-stage.mood-angry .companion-art{animation:companionAngry .5s ease-in-out infinite;filter:saturate(1.25) contrast(1.05)}
+.companion-stage.mood-thinking .companion-art{animation:companionThink 2.2s ease-in-out infinite}
+.companion-stage.reacting .companion-art{animation:companionReact .7s cubic-bezier(.2,.8,.2,1)}
+.companion-badge{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:3;padding:.4rem .75rem;border:1px solid rgba(255,255,255,.12);background:rgba(8,9,13,.62);backdrop-filter:blur(12px);border-radius:99px;font-size:.72rem;color:#fff;box-shadow:0 8px 30px rgba(0,0,0,.2)}
+.companion-hearts{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.float-heart{position:absolute;bottom:58px;font-size:1.15rem;animation:heartFloat 1.6s ease-out forwards;opacity:0}
+@keyframes companionIdle{0%,100%{transform:translateY(0) rotate(-.5deg) scale(1)}50%{transform:translateY(-8px) rotate(.5deg) scale(1.015)}}
+@keyframes companionHappy{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-14px) scale(1.045) rotate(1deg)}}
+@keyframes companionShy{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-7px) rotate(-1deg)}75%{transform:translateX(7px) rotate(1deg)}}
+@keyframes companionSad{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(7px) rotate(-1deg)}}
+@keyframes companionAngry{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes companionThink{0%,100%{transform:rotate(-1deg) translateY(0)}50%{transform:rotate(2deg) translateY(-6px)}}
+@keyframes companionReact{0%{transform:scale(.96) translateY(8px)}55%{transform:scale(1.08) translateY(-12px)}100%{transform:scale(1) translateY(0)}}
+@keyframes shadowPulse{0%,100%{transform:scale(.92);opacity:.55}50%{transform:scale(1.08);opacity:.8}}
+@keyframes heartFloat{0%{transform:translate(0,0) scale(.6);opacity:0}15%{opacity:1}100%{transform:translate(var(--x),-130px) scale(1.2);opacity:0}}
+@media(max-width:700px){.companion-stage{min-height:205px}.companion-art{height:195px;width:170px}.companion-badge{top:10px}}
+
+
+/* ==================== LAYOUT ==================== */
+.container{max-width:1200px;margin:0 auto;padding:0 1.25rem}
+.navbar{position:sticky;top:0;z-index:50;background:rgba(8,9,13,.8);backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{font-weight:800;font-size:1.2rem;letter-spacing:.05em}
+.page{display:none}.page.active{display:block;animation:fade .3s}
+
+/* Landing */
+.hero{padding:5rem 0 4rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(139,92,246,.15),transparent 70%);pointer-events:none}
+.hero h1{font-size:clamp(2rem,6vw,3.5rem);font-weight:800;line-height:1.15}
+.hero p{color:var(--muted);font-size:1.1rem;max-width:520px;margin:1rem auto 2rem}
+.section{padding:4rem 0}
+.section h2{font-size:1.8rem;text-align:center;margin-bottom:.5rem}
+.section .sub{text-align:center;color:var(--muted);margin-bottom:2.5rem}
+.grid{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.feat{padding:1.5rem}
+.feat h3{margin:.75rem 0 .5rem;font-size:1.05rem}
+.feat p{color:var(--muted);font-size:.9rem;line-height:1.6}
+.char-card{overflow:hidden;position:relative;cursor:pointer}
+.char-fallback{aspect-ratio:3/4;position:relative;display:flex;align-items:center;justify-content:center;font-size:4rem;background:linear-gradient(160deg,#1a1230,#2b1230)}
+.char-fallback::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85),transparent 55%)}
+.char-info{position:absolute;bottom:.75rem;left:.9rem;right:.9rem;z-index:2}
+.badge{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(139,92,246,.3);border:1px solid rgba(139,92,246,.5);border-radius:99px;padding:.15rem .5rem}
+.on-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block}
+.fav{position:absolute;top:.75rem;right:.75rem;z-index:3;background:rgba(0,0,0,.4);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.fav:hover{transform:scale(1.15)}
+.fav.on svg{fill:var(--accent);stroke:var(--accent)}
+.pricing-card{padding:2rem;text-align:center}
+.pricing-card.pro{border-color:rgba(139,92,246,.5);box-shadow:var(--glow)}
+.price{font-size:2.2rem;font-weight:800;margin:.75rem 0}
+.plan-feats{list-style:none;margin:1.25rem 0;color:var(--muted);font-size:.9rem}
+.plan-feats li{padding:.35rem 0}
+details{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:.75rem}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--muted);margin-top:.75rem;font-size:.9rem;line-height:1.6}
+footer{border-top:1px solid var(--glass-border);padding:2.5rem 0;color:var(--muted);font-size:.85rem;text-align:center}
+.disclaimer{text-align:center;font-size:.75rem;color:var(--muted);padding:1rem;opacity:.7}
+
+/* Auth */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.25rem}
+.auth-card{width:100%;max-width:400px;padding:2rem}
+.auth-card h2{text-align:center;margin-bottom:1.5rem}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.85rem;margin-bottom:.4rem;color:var(--muted)}
+.err{color:#f87171;font-size:.8rem;margin-top:.5rem;min-height:1.2em}
+
+/* App layout */
+.app{display:none;min-height:100vh}
+.app.active{display:flex}
+.sidebar{width:230px;border-right:1px solid var(--glass-border);padding:1.25rem;display:none;flex-direction:column;gap:.25rem;position:sticky;top:0;height:100vh;flex-shrink:0}
+.sidebar a{padding:.65rem .9rem;border-radius:.75rem;color:var(--muted);font-size:.92rem;display:flex;gap:.6rem;align-items:center}
+.sidebar a:hover,.sidebar a.act{background:var(--glass);color:var(--text)}
+.main{flex:1;min-width:0;width:100%}
+.bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(8,9,13,.92);backdrop-filter:blur(16px);border-top:1px solid var(--glass-border);display:flex;justify-content:space-around;padding:.5rem 0;padding-bottom:calc(.5rem + env(safe-area-inset-bottom))}
+.bottomnav button{background:none;color:var(--muted);font-size:.65rem;display:flex;flex-direction:column;align-items:center;gap:.2rem;width:64px}
+.bottomnav button.act{color:var(--primary)}
+@media(min-width:768px){.sidebar{display:flex}.bottomnav{display:none}}
+
+/* Chat */
+.chat-layout{display:flex;height:100vh}
+.conv-list{width:280px;border-right:1px solid var(--glass-border);display:none;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.conv-item{padding:.9rem 1rem;cursor:pointer;border-bottom:1px solid var(--glass-border);display:flex;gap:.75rem;align-items:center}
+.conv-item:hover{background:var(--glass)}
+.conv-item.act{background:var(--glass)}
+.avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:linear-gradient(135deg,var(--primary),var(--accent));flex-shrink:0;overflow:hidden}
+.chat-pane{flex:1;display:flex;flex-direction:column;min-width:0}
+.chat-head{padding:.8rem 1.25rem;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:.75rem}
+.msgs{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:.75rem}
+.bubble{max-width:82%;padding:.7rem 1rem;font-size:.92rem;line-height:1.55;white-space:pre-wrap;word-break:break-word;border-radius:1rem;animation:msgIn .25s ease-out}
+.bubble.user{align-self:flex-end;background:linear-gradient(135deg,var(--primary),var(--accent));border-bottom-right-radius:.3rem}
+.bubble.ai{align-self:flex-start;background:var(--glass);border:1px solid var(--glass-border);border-bottom-left-radius:.3rem}
+.composer{padding:1rem;border-top:1px solid var(--glass-border);display:flex;gap:.6rem}
+.composer textarea{resize:none;max-height:120px}
+@media(min-width:768px){.conv-list{display:flex}}
+
+/* Profile modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:1.25rem}
+.modal{max-width:480px;width:100%;padding:0;overflow:hidden;max-height:90vh;overflow-y:auto;position:relative}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.5rem}
+.gallery-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.75rem;cursor:pointer;transition:transform .15s}
+.gallery-grid img:hover{transform:scale(1.05)}
+
+/* Toast */
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:200;padding:.7rem 1.2rem;border-radius:.85rem;display:none;font-size:.9rem;max-width:90vw;text-align:center;animation:fade .2s}
+@media(min-width:768px){#toast{bottom:24px}}
+
+/* ==================== V2 VISUAL ENHANCEMENTS ==================== */
+.ambient-orb{position:fixed;width:420px;height:420px;border-radius:50%;filter:blur(100px);opacity:.12;pointer-events:none;z-index:-1}
+.orb-a{background:#8B5CF6;top:3%;left:-180px}
+.orb-b{background:#EC4899;top:42%;right:-200px}
+.hero{min-height:620px;display:grid;grid-template-columns:1.05fr .95fr;gap:3rem;align-items:center;text-align:left;padding:5rem 0}
+.hero-copy{position:relative;z-index:2}
+.hero-copy p{margin-left:0;margin-right:0}
+.hero-actions{display:flex;gap:.75rem;flex-wrap:wrap}
+.hero-visual{position:relative;min-height:500px;display:flex;align-items:center;justify-content:center}
+.hero-photo{width:min(430px,88vw);height:520px;object-fit:cover;border-radius:30px;border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 100px rgba(0,0,0,.55),0 0 80px rgba(139,92,246,.16)}
+.hero-photo-overlay{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);width:min(390px,80vw);padding:1rem 1.1rem;border:1px solid rgba(255,255,255,.12);background:rgba(8,9,13,.72);backdrop-filter:blur(18px);border-radius:18px}
+.search-row{display:flex;gap:.75rem;align-items:center;justify-content:center;margin:0 auto 1.5rem;max-width:760px}
+.search-row .inp{max-width:420px}
+.filter-row{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.5rem}
+.filter-chip{padding:.45rem .75rem;border-radius:999px;background:var(--glass);border:1px solid var(--glass-border);color:var(--muted);cursor:pointer}
+.filter-chip.active,.filter-chip:hover{color:#fff;border-color:rgba(139,92,246,.55);background:rgba(139,92,246,.14)}
+.char-card{transition:transform .25s,box-shadow .25s,border-color .25s}
+.char-card:hover{transform:translateY(-5px);box-shadow:0 18px 50px rgba(0,0,0,.35)}
+@media(max-width:850px){
+  .hero{grid-template-columns:1fr;text-align:center;min-height:auto;padding:4rem 0 3rem}
+  .hero-copy p{margin:1rem auto 2rem}
+  .hero-actions{justify-content:center}
+  .hero-visual{min-height:430px}
+  .hero-photo{height:440px}
+}
+
+/* ===== LUNARA PRO COMPANION POLISH ===== */
+.companion-stage{position:relative;overflow:hidden;min-height:320px;border:1px solid rgba(255,255,255,.10);border-radius:24px;background:radial-gradient(circle at 50% 20%,rgba(174,82,255,.18),transparent 48%),linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.015));box-shadow:inset 0 1px rgba(255,255,255,.08),0 20px 60px rgba(0,0,0,.25);display:flex;align-items:flex-end;justify-content:center;margin-bottom:14px}
+.companion-stage:before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(173,92,255,.20);filter:blur(45px);bottom:5%;left:50%;transform:translateX(-50%);animation:companionAura 4s ease-in-out infinite}
+.companion-art{position:relative;z-index:2;width:min(280px,72%);height:300px;object-fit:cover;object-position:center top;border-radius:150px 150px 28px 28px;box-shadow:0 25px 55px rgba(0,0,0,.38),0 0 45px rgba(179,86,255,.18);animation:companionIdle 4.2s ease-in-out infinite;transition:filter .35s,transform .35s}
+.companion-stage.speaking .companion-art{animation:companionSpeak .72s ease-in-out infinite;filter:saturate(1.06) brightness(1.03)}
+.companion-stage.thinking .companion-art{animation:companionThink 1.8s ease-in-out infinite}
+.companion-status{position:absolute;z-index:4;left:16px;bottom:16px;padding:9px 13px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(12,10,18,.72);backdrop-filter:blur(14px);font-size:12px;color:#eee;display:flex;gap:8px;align-items:center}
+.companion-dot{width:7px;height:7px;border-radius:50%;background:#7dffb2;box-shadow:0 0 12px #7dffb2;animation:statusPulse 1.8s infinite}
+.companion-wave{position:absolute;z-index:4;right:16px;bottom:16px;height:30px;display:flex;align-items:center;gap:3px;padding:7px 10px;border-radius:999px;background:rgba(12,10,18,.72);backdrop-filter:blur(14px);opacity:0;transform:translateY(8px);transition:.25s}
+.companion-stage.speaking .companion-wave{opacity:1;transform:none}
+.companion-wave i{display:block;width:3px;height:8px;border-radius:3px;background:currentColor;animation:wave .55s ease-in-out infinite alternate}
+.companion-wave i:nth-child(2){animation-delay:.08s}.companion-wave i:nth-child(3){animation-delay:.16s}.companion-wave i:nth-child(4){animation-delay:.24s}.companion-wave i:nth-child(5){animation-delay:.32s}
+.message{animation:messageIn .28s ease both}
+@keyframes companionIdle{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.008)}}
+@keyframes companionSpeak{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.014)}}
+@keyframes companionThink{0%,100%{transform:rotate(0) translateY(0)}50%{transform:rotate(-1deg) translateY(-5px)}}
+@keyframes companionAura{0%,100%{transform:translateX(-50%) scale(.92);opacity:.65}50%{transform:translateX(-50%) scale(1.08);opacity:1}}
+@keyframes statusPulse{0%,100%{opacity:.55;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes wave{from{height:6px}to{height:22px}}
+@keyframes messageIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.companion-art,.companion-stage:before,.companion-dot,.companion-wave i{animation:none!important}.message{animation:none!important}}
+@media(max-width:640px){.companion-stage{min-height:260px}.companion-art{height:245px;width:68%}.companion-status{left:10px;bottom:10px}.companion-wave{right:10px;bottom:10px}}
+
+</style>
+</head>
+<body>
+<div class="ambient-orb orb-a"></div>
+<div class="ambient-orb orb-b"></div>
+
+<!-- ==================== NAVBAR ==================== -->
+<nav class="navbar" id="navbar">
+  <div class="container nav-inner">
+    <a href="#" onclick="go('landing');return false" class="logo">LUNARA<span class="gtext"> AI</span></a>
+    <div id="navAuth" style="display:flex;gap:.5rem"></div>
+  </div>
+</nav>
+
+<!-- ==================== LANDING ==================== -->
+<div class="page active" id="page-landing">
+  <section class="hero container">
+    <div class="hero-copy">
+      <span class="badge">✦ Premium AI Companions · 18+</span>
+      <h1 style="margin-top:1rem;font-size:clamp(2.4rem,6vw,4.5rem)">
+        Someone to talk to, <span class="gtext">anytime.</span>
+      </h1>
+      <p>Choose a fictional adult AI companion with her own personality, memory, voice and conversation style.</p>
+      <div class="hero-actions">
+        <button class="btn" onclick="go('auth')">Start Chatting →</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('companions').scrollIntoView({behavior:'smooth'})">Explore Companions</button>
+      </div>
+      <div class="stats" style="max-width:620px;margin-top:2rem">
+        <div class="stat glass"><b>4+</b><span>Unique companions</span></div>
+        <div class="stat glass"><b>24/7</b><span>Conversation experience</span></div>
+        <div class="stat glass"><b>18+</b><span>Adult fictional personas</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <img class="hero-photo" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=85" alt="Aria — fictional adult AI companion"
+           onerror="this.style.display='none';this.parentElement.querySelector('.hero-fallback').style.display='flex'">
+      <div class="hero-fallback char-fallback" style="display:none;width:min(430px,88vw);height:520px;border-radius:30px">🌸</div>
+      <div class="hero-photo-overlay">
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <span class="on-dot"></span><strong>Aria · 24 · Online</strong>
+        </div>
+        <div class="muted" style="font-size:.8rem;margin-top:.25rem">Sweet, caring & playful</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section container" id="companions">
+    <h2>Your Companions</h2>
+    <p class="sub">Four unique personalities, each with her own style. Tap a card to view her profile.</p>
+    <div class="search-row">
+      <input class="inp" id="landingSearch" placeholder="🔍 Search companions…" oninput="renderLanding()">
+    </div>
+    <div class="filter-row" id="landingFilters">
+      <button class="filter-chip active" data-filter="all" onclick="setLandingFilter('all')">All</button>
+      <button class="filter-chip" data-filter="caring" onclick="setLandingFilter('caring')">Caring</button>
+      <button class="filter-chip" data-filter="romantic" onclick="setLandingFilter('romantic')">Romantic</button>
+      <button class="filter-chip" data-filter="funny" onclick="setLandingFilter('funny')">Funny</button>
+      <button class="filter-chip" data-filter="confident" onclick="setLandingFilter('confident')">Confident</button>
+    </div>
+    <div class="grid" id="landingChars"></div>
+  </section>
+
+  <section class="section container">
+    <h2>Why LUNARA</h2>
+    <p class="sub">Built like a premium product, not a chatbot demo.</p>
+    <div class="grid">
+      <div class="glass glass-h feat"><div style="font-size:1.8rem">💬</div><h3>Natural Conversations</h3><p>Context-aware replies that feel human — she remembers what matters to you.</p></div>
+      <div class="glass glass-h feat"><div style="font-size:1.8rem">🧠</div><h3>Long-term Memory</h3><p>She remembers your name, preferences and important moments across chats.</p></div>
+      <div class="glass glass-h feat"><div style="font-size:1.8rem">⚡</div><h3>Real-time Streaming</h3><p>Responses appear naturally as she "types" — no waiting for walls of text.</p></div>
+      <div class="glass glass-h feat"><div style="font-size:1.8rem">🎁</div><h3>Rewards & Gifts</h3><p>Earn coins daily, unlock achievements, and send her gifts she'll react to.</p></div>
+      <div class="glass glass-h feat"><div style="font-size:1.8rem">🖼️</div><h3>Premium Profiles</h3><p>Every companion has a full profile — cover photo, gallery, and personality traits.</p></div>
+      <div class="glass glass-h feat"><div style="font-size:1.8rem">🗣️</div><h3>She Speaks!</h3><p>Voice replies — hear her voice with one tap (uses your browser's speech engine).</p></div>
+    </div>
+  </section>
+
+  <section class="section container">
+    <h2>How it works</h2>
+    <div class="grid">
+      <div class="glass feat"><h3><span class="gtext">1.</span> Create account</h3><p>Sign up free in seconds with email.</p></div>
+      <div class="glass feat"><h3><span class="gtext">2.</span> Pick a companion</h3><p>Browse personalities and find your match.</p></div>
+      <div class="glass feat"><h3><span class="gtext">3.</span> Start talking</h3><p>Chat anytime — she's always there.</p></div>
+    </div>
+  </section>
+
+  <section class="section container">
+    <h2>Pricing</h2>
+    <p class="sub">Start free. Upgrade anytime.</p>
+    <div class="grid" id="pricingGrid"></div>
+  </section>
+
+  <section class="section container" style="max-width:760px">
+    <h2>FAQ</h2>
+    <details><summary>Is my conversation private?</summary><p>Yes. Chats are stored securely and you can view or delete any memory or conversation at any time.</p></details>
+    <details><summary>What is the free plan?</summary><p>100 messages per day with all basic companions — no credit card needed.</p></details>
+    <details><summary>Can I change my companion's personality?</summary><p>Yes, personality customization is available on Premium and Pro plans.</p></details>
+    <details><summary>Does she remember me?</summary><p>She builds a memory of your preferences, name, and favorite topics — and you control exactly what she remembers.</p></details>
+    <details><summary>Are the companions real people?</summary><p>No. All companions are entirely AI-generated fictional characters. All imagery is AI-generated. This platform is intended for adults (18+).</p></details>
+    <details><summary>How do I earn coins?</summary><p>Chat daily, keep your streak, unlock achievements, and invite friends with your referral link — all give free coins!</p></details>
+  </section>
+
+  <section class="section container" style="text-align:center">
+    <div class="glass" style="padding:3rem 1.5rem">
+      <h2 style="font-size:1.8rem">Ready to meet her?</h2>
+      <p class="muted" style="margin:.75rem 0 1.5rem">A companion who is always there.</p>
+      <button class="btn" onclick="go('auth')">Start Chatting →</button>
+    </div>
+  </section>
+  <footer>
+    <p>© 2026 LUNARA AI · <a href="#">Privacy</a> · <a href="#">Terms</a> · <a href="#">Support</a></p>
+    <p class="disclaimer">All companions are AI-generated fictional characters, aged 18+. All imagery is AI-generated and does not depict real people. This is a demo build.</p>
+  </footer>
+</div>
+
+<!-- ==================== AUTH ==================== -->
+<div class="page" id="page-auth">
+  <div class="auth-wrap">
+    <div class="glass auth-card">
+      <h2 id="authTitle">Welcome back</h2>
+      <div class="field"><label>Email</label><input class="inp" id="aEmail" type="email" autocomplete="email"></div>
+      <div class="field"><label>Password</label><input class="inp" id="aPass" type="password" autocomplete="current-password"></div>
+      <div class="field" id="nameField" style="display:none"><label>Name</label><input class="inp" id="aName"></div>
+      <div class="err" id="authErr"></div>
+      <button class="btn" style="width:100%" id="authBtn" onclick="submitAuth()">Log in</button>
+      <p class="muted" style="text-align:center;margin-top:1rem;font-size:.85rem">
+        <span id="authSwitchText">Don't have an account?</span>
+        <a href="#" style="color:var(--highlight)" onclick="toggleAuthMode();return false" id="authSwitchLink">Register</a>
+      </p>
+      <button class="btn btn-ghost" style="width:100%;margin-top:.75rem" onclick="demoLogin()">⚡ Continue as Demo User</button>
+      <p class="muted" style="text-align:center;margin-top:1rem;font-size:.7rem">By continuing you confirm you are 18+ and agree to our Terms & Privacy Policy.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== APP ==================== -->
+<div class="app" id="app">
+  <aside class="sidebar">
+    <div class="logo" style="margin-bottom:1.5rem">LUNARA<span class="gtext"> AI</span></div>
+    <a href="#" data-tab="discover" class="act">🔍 Discover</a>
+    <a href="#" data-tab="chats">💬 Chats</a>
+    <a href="#" data-tab="favorites">⭐ Favorites</a>
+    <a href="#" data-tab="rewards">🎁 Rewards</a>
+    <a href="#" data-tab="credits">⚡ Credits</a>
+    <a href="#" data-tab="settings">⚙ Settings</a>
+    <div class="glass" style="padding:.75rem;margin-top:1rem;text-align:center">
+      <div class="gtext" style="font-weight:800" id="sidebarCoins">🪙 0</div>
+      <div class="muted" style="font-size:.7rem">your coins</div>
+    </div>
+    <a href="#" onclick="logout();return false" style="margin-top:auto">🚪 Logout</a>
+  </aside>
+
+  <div class="main">
+    <!-- DISCOVER -->
+    <div class="tab" id="tab-discover" style="display:none;padding:1.5rem 1.25rem 6rem">
+      <h2 style="font-size:1.5rem">Discover Companions</h2>
+      <p class="muted" style="margin-bottom:1.5rem">Find the personality that fits you.</p>
+      <input class="inp" id="searchChars" placeholder="🔍 Search companions…" oninput="renderChars()" style="max-width:400px;margin-bottom:1.5rem">
+      <div class="grid" id="discoverChars"></div>
+    </div>
+
+    <!-- CHATS -->
+    <div class="tab" id="tab-chats" style="display:none">
+      <div class="chat-layout">
+        <div class="conv-list" id="convList"></div>
+        <div class="chat-pane">
+          <div class="chat-head" id="chatHead">
+            <span class="avatar" id="chatAvatar">🤍</span>
+            <div style="flex:1;min-width:0"><div id="chatName" style="font-weight:700">Pick a companion</div><div class="muted" style="font-size:.75rem" id="chatStatus"></div></div>
+            <button class="btn btn-ghost" style="padding:.4rem .7rem;font-size:.8rem" id="voiceBtn" onclick="toggleVoice()" title="Voice on/off">🔇</button>
+          </div>
+          <div class="companion-stage" id="companionStage" aria-label="Animated AI companion">
+            <div class="companion-badge" id="companionMood">✨ Ready to chat</div>
+            <img class="companion-art" id="companionArt" src="" alt="AI companion" loading="eager" onerror="this.style.display='none'">
+            <div class="companion-hearts" id="companionHearts"></div>
+       <div class="companion-status"><span class="companion-dot"></span><span id="companionStatusText">Ready to chat</span></div>
+       <div class="companion-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="msgs" id="msgs"><p class="muted" style="margin:auto;text-align:center">Choose a companion from Discover to start chatting 💜</p></div>
+          <div class="composer">
+            <textarea class="inp" id="msgInput" rows="1" placeholder="Type a message… (Enter to send)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+            <button class="btn" onclick="sendMsg()" aria-label="Send">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAVORITES -->
+    <div class="tab" id="tab-favorites" style="display:none;padding:1.5rem 1.25rem 6rem">
+      <h2 style="font-size:1.5rem;margin-bottom:1.5rem">Favorites</h2><div class="grid" id="favChars"></div>
+    </div>
+
+    <!-- REWARDS -->
+    <div class="tab" id="tab-rewards" style="display:none;padding:1.5rem 1.25rem 6rem;max-width:700px">
+      <h2 style="font-size:1.5rem;margin-bottom:1rem">Rewards & Profile</h2>
+      <div class="glass feat" style="margin-bottom:1rem;display:flex;gap:1rem;align-items:center">
+        <div class="avatar" style="width:60px;height:60px;font-size:1.6rem">💜</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:1.05rem" id="profileName"></div>
+          <div class="muted" style="font-size:.8rem" id="profileLevel"></div>
+          <div style="background:var(--bg2);border-radius:99px;height:8px;margin-top:.5rem;overflow:hidden"><div id="xpBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--highlight),var(--primary));transition:width .4s"></div></div>
+        </div>
+        <div style="text-align:center">
+          <div class="gtext" style="font-size:1.5rem;font-weight:800" id="coinBalance">0</div>
+          <div class="muted" style="font-size:.7rem">COINS</div>
+        </div>
+      </div>
+      <div class="glass feat" style="margin-bottom:1rem">
+        <h3>🎁 Daily Reward</h3>
+        <p class="muted" style="font-size:.85rem;margin:.5rem 0">Streak: <b id="streakNum" style="color:var(--accent)">0</b> দিন — যত বেশি streak, তত বড় বোনাস!</p>
+        <button class="btn" id="claimBtn" onclick="claimDaily()">আজকের বোনাস নিন</button>
+      </div>
+      <div class="glass feat" style="margin-bottom:1rem">
+        <h3>🔗 Referral — বন্ধু আনো, Coin নাও</h3>
+        <p class="muted" style="font-size:.85rem;margin:.5rem 0">প্রতি বন্ধু জয়েন করলে তুমি <b style="color:var(--highlight)">+৫০ coin</b> পাবে।</p>
+        <div style="display:flex;gap:.5rem;margin-top:.5rem">
+          <input class="inp" id="refLink" readonly>
+          <button class="btn" onclick="copyRef()">Copy</button>
+        </div>
+        <div class="muted" style="font-size:.8rem;margin-top:.5rem">Referral দিয়ে জয়েন: <b id="refCount" style="color:var(--text)">0</b> জন</div>
+      </div>
+      <div class="glass feat" style="margin-bottom:1rem">
+        <h3>🏆 Achievements</h3>
+        <div id="achList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.75rem;margin-top:.75rem"></div>
+      </div>
+      <div class="glass feat" style="margin-bottom:1rem">
+        <h3>🪙 Buy Coins</h3>
+        <div id="coinPacks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.75rem;margin-top:.75rem"></div>
+      </div>
+      <div class="glass feat">
+        <h3>💝 Gift Shop — প্রিয়জনকে গিফট পাঠাও</h3>
+        <p class="muted" style="font-size:.85rem;margin:.5rem 0">চ্যাটের সময় গিফট পাঠালে সে বিশেষ রিয়াক্ট করবে।</p>
+        <div id="giftShop" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.75rem;margin-top:.75rem"></div>
+      </div>
+    </div>
+
+    <!-- CREDITS -->
+    <div class="tab" id="tab-credits" style="display:none;padding:1.5rem 1.25rem 6rem;max-width:700px">
+      <h2 style="font-size:1.5rem;margin-bottom:1.5rem">Credits & Usage</h2>
+      <div class="glass feat" style="margin-bottom:1rem"><h3>Today's usage</h3><p id="usageText" style="margin-top:.5rem"></p><div style="background:var(--bg2);border-radius:99px;height:8px;margin-top:.75rem;overflow:hidden"><div id="usageBar" style="height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .4s"></div></div></div>
+      <div class="glass feat"><h3>Transactions</h3><div id="txnList" style="margin-top:.75rem;color:var(--muted);font-size:.85rem"></div></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="tab" id="tab-settings" style="display:none;padding:1.5rem 1.25rem 6rem;max-width:600px">
+      <h2 style="font-size:1.5rem;margin-bottom:1.5rem">Settings</h2>
+      <div class="glass feat" style="margin-bottom:1rem">
+        <h3>🧠 Memory</h3>
+        <label style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;color:var(--muted);font-size:.9rem">Enable long-term memory
+          <input type="checkbox" id="memToggle" onchange="saveSetting('memory',this.checked)" style="width:20px;height:20px;accent-color:var(--primary)"></label>
+        <div id="memoryList" style="margin-top:1rem"></div>
+        <div style="display:flex;gap:.5rem;margin-top:.75rem"><input class="inp" id="newMemory" placeholder="Add a custom memory… e.g. 'আমি বৃষ্টি ভালোবাসি'"><button class="btn" onclick="addMemory()">+</button></div>
+      </div>
+      <div class="glass feat" style="margin-bottom:1rem">
+        <h3>👤 Profile</h3>
+        <div class="field" style="margin-top:1rem"><label>Your name (she'll use it)</label><input class="inp" id="setName" onchange="saveSetting('name',this.value)"></div>
+        <div class="field"><label>Preferred language</label>
+          <select class="inp" id="setLang" onchange="saveSetting('lang',this.value)">
+            <option value="en">English</option><option value="bn">বাংলা (Bengali)</option><option value="hi">हिन्दी</option><option value="es">Español</option>
+          </select></div>
+        <div class="field"><label>Her voice (TTS)</label>
+          <select class="inp" id="setVoice" onchange="saveSetting('voiceRate',this.value)">
+            <option value="1">Normal</option><option value="0.85">Soft / Slow</option><option value="1.15">Fast</option>
+          </select></div>
+      </div>
+      <div class="glass feat" style="margin-bottom:1rem">
+        <h3>💎 Subscription</h3><p id="planInfo" style="margin-top:.5rem;color:var(--muted);font-size:.9rem"></p>
+      </div>
+      <div class="glass feat" style="border-color:rgba(248,113,113,.3)">
+        <h3 style="color:#f87171">⚠ Danger Zone</h3>
+        <p class="muted" style="font-size:.85rem;margin:.5rem 0">Delete all chats and memories permanently.</p>
+        <button class="btn btn-ghost" style="border-color:rgba(248,113,113,.4);color:#f87171" onclick="wipeAll()">Delete Everything</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottomnav">
+    <button data-tab="discover" class="act"><span style="font-size:1.2rem">🔍</span>Discover</button>
+    <button data-tab="chats"><span style="font-size:1.2rem">💬</span>Chats</button>
+    <button data-tab="rewards"><span style="font-size:1.2rem">🎁</span>Rewards</button>
+    <button data-tab="credits"><span style="font-size:1.2rem">⚡</span>Credits</button>
+    <button data-tab="settings"><span style="font-size:1.2rem">⚙</span>Settings</button>
+  </nav>
+</div>
+
+<div class="glass" id="toast"></div>
+
+<script>
+/* ============================================================
+   LUNARA AI — Single-file demo build (with Image System)
+   ============================================================ */
+
+/* ============ CONFIG ============ */
+const DAILY_LIMIT = 100;
+const STARTING_COINS = 100;
+
+/* ============ CHARACTERS (with image paths) ============
+   IMAGE SETUP: নিচের path গুলোতে ইমেজ রাখলেই অটো লোড হবে।
+   না থাকলে gradient emoji fallback দেখাবে।
+   Folder structure:
+   https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=85  https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1400&h=800&q=85  https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=700&h=900&q=85 ...
+   ========================================================= */
+const CHARACTERS = [
+  {id:"aria",emoji:"🌸",name:"Aria",tagline:"Sweet, caring, playful",age:"24",premium:false,
+   bio:"Aria is warm and affectionate — the girl who remembers your bad days and makes them better with playful banter and genuine care. Romantic evenings and deep talks are her thing.",
+   traits:["caring","playful","supportive","slightly teasing"],
+   looks:["24 years old","Long dark hair","Elegant black dress","Romantic evening vibe"],
+   greeting:"Hey you! 💜 Aria here. How was your day? Tell me everything!",
+   style:"warm, playful, uses 💜 and 😊 emojis, 1-3 short sentences, caring and teasing",
+   img:{
+     profile:"https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=85",
+     cover:"https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1400&h=800&q=85",
+     gallery:["https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=700&h=900&q=85"],
+   }},
+  {id:"luna",emoji:"🌙",name:"Luna",tagline:"Calm, intelligent, romantic",age:"23",premium:false,
+   bio:"Luna speaks thoughtfully and loves deep conversations — books, ideas, quiet evenings under neon-pink skies. Every conversation with her feels like a small universe.",
+   traits:["calm","intelligent","romantic","thoughtful"],
+   looks:["23 years old","Long brown hair","Stylish fitted outfit","Pink/purple ambient lighting"],
+   greeting:"Hello… 🌙 I'm Luna. I believe every conversation is a small universe. What's on your mind tonight?",
+   style:"calm, poetic, thoughtful, romantic, medium-length messages",
+   img:{
+     profile:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=85",
+     cover:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1400&h=800&q=85",
+     gallery:["https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=700&h=900&q=85"],
+   }},
+  {id:"mia",emoji:"⚡",name:"Mia",tagline:"Funny, energetic, adventurous",age:"25",premium:false,
+   bio:"Mia is your hype girl — high energy, quick jokes, always up for an adventure. Life with Mia is never boring.",
+   traits:["funny","energetic","adventurous","spontaneous"],
+   looks:["25 years old","Wavy black hair","Modern fashion outfit","Luxury studio vibe"],
+   greeting:"YOOO! ⚡ Mia's in the house! 😄 Okay okay tell me — what's the most interesting thing that happened to you today?",
+   style:"high energy, witty, jokes a lot, 😂🤣🔥 emojis, punchy short messages",
+   img:{
+     profile:"https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=85",
+     cover:"https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1400&h=800&q=85",
+     gallery:["https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=700&h=900&q=85"],
+   }},
+  {id:"nova",emoji:"🖤",name:"Nova",tagline:"Confident, ambitious, mysterious",age:"26",premium:true,
+   bio:"Nova keeps you guessing — confident, driven, with a magnetic mysterious edge. She doesn't do small talk; she does real talk under cinematic night lights.",
+   traits:["confident","ambitious","mysterious","independent"],
+   looks:["26 years old","Dark hair","Elegant red evening dress","Cinematic night lighting"],
+   greeting:"Well… you found me. 🖤 I'm Nova. I don't do small talk — so tell me something real.",
+   style:"confident, intriguing, slightly mysterious, asks sharp questions",
+   img:{
+     profile:"https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=85",
+     cover:"https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1400&h=800&q=85",
+     gallery:["https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?auto=format&fit=crop&w=700&h=900&q=85","https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=700&h=900&q=85"],
+   }},
+];
+
+const PLANS = [
+  {id:"free",name:"Free",price:"$0",lim:"100 msgs/day",feats:["Basic companions","20 memories","Community support"]},
+  {id:"premium",name:"Premium",price:"$9.99",lim:"2,000 msgs/day",feats:["Premium characters","Advanced memory","Faster responses","Personality customization"]},
+  {id:"pro",name:"Pro",price:"$29.99",lim:"Unlimited*",feats:["Everything in Premium","Priority AI","Advanced customization","Early access features"]},
+];
+const GIFTS = [
+  {id:"rose",emoji:"🌹",name:"Rose",cost:10},
+  {id:"choco",emoji:"🍫",name:"Chocolate",cost:25},
+  {id:"teddy",emoji:"🧸",name:"Teddy",cost:50},
+  {id:"ring",emoji:"💍",name:"Ring",cost:200},
+  {id:"car",emoji:"🏎️",name:"Supercar",cost:500},
+  {id:"crown",emoji:"👑",name:"Crown",cost:1000},
+];
+const GIFT_REACTIONS = {
+  rose:"A rose for me? 🌹 You're sweet… 💜",
+  choco:"Chocolate!! 😍 My favorite, how did you know?",
+  teddy:"A teddy bear! 🧸 I'm hugging it right now. Thank you!",
+  ring:"Wait… a ring?? 💍 You're making me blush so hard right now…",
+  car:"A SUPERCAR?! 🏎️ Take me for a ride — midnight drive, just us!",
+  crown:"My crown 👑 So I really am your queen… I'll treasure this.",
+};
+const COIN_PACKS = [
+  {coins:100,price:1,label:"Starter"},
+  {coins:500,price:4,label:"Value"},
+  {coins:1000,price:7,label:"Best Deal"},
+];
+const ACHIEVEMENTS = [
+  {id:"first_chat",emoji:"💬",name:"First Words",desc:"প্রথম মেসেজ পাঠাও",check:()=>totalMsgs()>=1,reward:20},
+  {id:"chat_50",emoji:"🗣️",name:"Chatty",desc:"৫০টি মেসেজ পাঠাও",check:()=>totalMsgs()>=50,reward:100},
+  {id:"all_friends",emoji:"🤝",name:"Social Butterfly",desc:"৪ ক্যারেক্টারের সাথেই কথা বলো",check:()=>Object.keys(chats).length>=4,reward:80},
+  {id:"fav_2",emoji:"⭐",name:"Curator",desc:"২টি ফেভারিট যোগ করো",check:()=>favs.length>=2,reward:30},
+  {id:"gift_1",emoji:"💝",name:"Generous Heart",desc:"একটি গিফট পাঠাও",check:()=>giftsSent.length>=1,reward:40},
+  {id:"streak_3",emoji:"🔥",name:"On Fire",desc:"৩ দিন streak করো",check:()=>streak.count>=3,reward:150},
+  {id:"ref_1",emoji:"🔗",name:"Connector",desc:"১ জন বন্ধু refer করো",check:()=>referral.count>=1,reward:50},
+  {id:"level_5",emoji:"🚀",name:"Level 5",desc:"লেভেল ৫ এ পৌঁছাও",check:()=>level()>=5,reward:200},
+];
+
+/* ============ STATE ============ */
+const store = {
+  get(k,d){ try{return JSON.parse(localStorage.getItem("ln_"+k)) ?? d}catch{return d} },
+  set(k,v){ localStorage.setItem("ln_"+k,JSON.stringify(v)) }
+};
+let user = store.get("user",null);
+let chats = store.get("chats",{});
+let favs = store.get("favs",[]);
+let memories = store.get("memories",[]);
+let usage = store.get("usage",{date:"",count:0});
+let txns = store.get("txns",[]);
+let prefs = store.get("prefs",{memory:true,name:"",lang:"en",plan:"free",voiceRate:1});
+let coins = store.get("coins",STARTING_COINS);
+let xp = store.get("xp",0);
+let streak = store.get("streak",{count:0,last:""});
+let referral = store.get("referral",{code:"",count:0});
+let giftsSent = store.get("giftsSent",[]);
+let claimedAch = store.get("claimedAch",[]);
+let activeChat = null, authMode = "login", voiceOn = false, isStreaming = false;
+
+if(usage.date!==today()){ usage={date:today(),count:0}; store.set("usage",usage); }
+
+/* ============ HELPERS ============ */
+function $(id){ return document.getElementById(id) }
+function today(){ return new Date().toISOString().slice(0,10) }
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.style.display="block"; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display="none",2800) }
+function esc(s){ const d=document.createElement("div"); d.textContent=s; return d.innerHTML }
+function saveAll(){ store.set("chats",chats); store.set("favs",favs); store.set("memories",memories); store.set("usage",usage); store.set("txns",txns); store.set("prefs",prefs); store.set("coins",coins); store.set("xp",xp); store.set("streak",streak); store.set("referral",referral); store.set("giftsSent",giftsSent); store.set("claimedAch",claimedAch); }
+function totalMsgs(){ return Object.values(chats).reduce((s,c)=>s+c.filter(m=>m.role==="user").length,0) }
+function level(){ return Math.floor(Math.sqrt(xp/50))+1 }
+function xpForLevel(l){ return (l-1)*(l-1)*50 }
+
+/* ============ IMAGE SYSTEM (smart fallback) ============ */
+/* ইমেজ path থাকলে <img>, লোড fail হলে emoji-gradient fallback */
+function profileImgHTML(c,style){
+  if(!c.img?.profile) return "";
+  return `<img src="${c.img.profile}" alt="${c.name} — AI companion" loading="lazy"
+    style="${style}"
+    onerror="this.remove()">`;
+}
+function avatarHTML(c,size){
+  return `<span class="avatar" style="width:${size}px;height:${size}px;${size<50?"font-size:1.1rem":""}">
+    ${profileImgHTML(c,"width:100%;height:100%;object-fit:cover")||c.emoji}</span>`;
+}
+function charImgBlock(c){
+  if(c.img?.profile){
+    return `<img src="${c.img.profile}" alt="${c.name} — AI companion portrait" loading="lazy"
+      style="width:100%;aspect-ratio:3/4;object-fit:cover;display:block"
+      onerror="this.outerHTML='<div class=&quot;char-fallback&quot;>${c.emoji}</div>'">`;
+  }
+  return `<div class="char-fallback">${c.emoji}</div>`;
+}
+
+/* ============ NAVIGATION ============ */
+function go(page){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  $("page-"+page).classList.add("active");
+  $("navbar").style.display = page==="auth" ? "none":"block";
+  window.scrollTo(0,0);
+  renderLanding();
+}
+function enterApp(){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  $("app").classList.add("active");
+  $("navbar").style.display="none";
+  initReferral();
+  renderChars(); renderConvList(); renderUsage(); renderMemories(); renderPlan(); updateEconomyUI(); renderGiftShop(); renderCoinPacks();
+  switchTab("discover");
+}
+function switchTab(tab){
+  document.querySelectorAll(".tab").forEach(t=>t.style.display="none");
+  $("tab-"+tab).style.display="block";
+  document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("act",b.dataset.tab===tab));
+  if(tab==="favorites") renderFavChars();
+  if(tab==="credits") renderUsage();
+  if(tab==="settings") renderMemories();
+  if(tab==="chats") renderConvList();
+  if(tab==="rewards"){ updateEconomyUI(); renderGiftShop(); renderCoinPacks(); }
+}
+document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+
+/* ============ AUTH ============ */
+function openAuthMode(mode){
+  authMode = mode === "register" ? "register" : "login";
+  go("auth");
+  updateAuthUI();
+}
+function updateAuthUI(){
+  $("authTitle").textContent = authMode === "login" ? "Welcome back" : "Create your account";
+  $("authBtn").textContent = authMode === "login" ? "Log in" : "Create account";
+  $("authSwitchText").textContent = authMode === "login" ? "Don't have an account?" : "Already have an account?";
+  $("authSwitchLink").textContent = authMode === "login" ? "Sign up" : "Log in";
+  $("nameField").style.display = authMode === "register" ? "block" : "none";
+  $("authErr").textContent = "";
+}
+function toggleAuthMode(){
+  authMode = authMode === "login" ? "register" : "login";
+  updateAuthUI();
+}
+function submitAuth(){
+  const email=$("aEmail").value.trim().toLowerCase(), pass=$("aPass").value, name=$("aName").value.trim();
+  const err=$("authErr");
+  if(!/^\S+@\S+\.\S+$/.test(email)) return err.textContent="Please enter a valid email.";
+  if(pass.length<8) return err.textContent="Password must be at least 8 characters.";
+  const users = store.get("users",{});
+  if(authMode==="register"){
+    if(users[email]) return err.textContent="An account with this email already exists.";
+    users[email]={name:name||email.split("@")[0]}; store.set("users",users);
+    onNewUserRegistered();
+    login({email,name:name||email.split("@")[0]});
+  }else{
+    if(!users[email]) return err.textContent="No account found. Please register first.";
+    login({email,name:users[email].name});
+  }
+}
+function demoLogin(){ onNewUserRegistered(); login({email:"demo@lunara.ai",name:"Demo User"}); }
+function login(u){ user=u; store.set("user",u); prefs.name=prefs.name||u.name; saveAll(); enterApp(); toast("Welcome, "+u.name+" 💜"); }
+function logout(){ user=null; store.set("user",null); $("app").classList.remove("active"); stopVoice(); go("landing"); toast("Logged out"); }
+
+/* ============ REFERRAL ============ */
+function initReferral(){
+  if(!referral.code){
+    referral.code = "LUNARA-" + Math.random().toString(36).slice(2,8).toUpperCase();
+    store.set("referral",referral);
+  }
+  const urlRef = new URLSearchParams(location.search).get("ref");
+  if(urlRef && !user){ store.set("pendingRef",urlRef); toast("🔗 Referral code apply হবে রেজিস্টার করার পর!") }
+}
+function onNewUserRegistered(){
+  const pendingRef = store.get("pendingRef",null);
+  if(pendingRef){ toast("🔗 Referral code applied! Referrer gets +50 coins (demo)"); store.set("pendingRef",null); }
+}
+function copyRef(){
+  const link = location.origin+location.pathname+"?ref="+referral.code;
+  navigator.clipboard.writeText(link).then(()=>toast("Referral link copy হয়েছে 🔗")).catch(()=>{
+    $("refLink").select(); document.execCommand("copy"); toast("Referral link copy হয়েছে 🔗");
+  });
+}
+
+/* ============ ECONOMY ============ */
+function addCoins(n,reason){
+  coins+=n; xp += Math.max(5, Math.floor(Math.abs(n)/2));
+  if(reason) txns.unshift({d:today(),t:reason+" (+"+n+" coins)",amt:0});
+  saveAll(); updateEconomyUI(); checkAchievements();
+}
+function claimDaily(){
+  const t=today();
+  if(streak.last===t) return toast("আজকের বোনাস তুমি নিয়ে গেছো! আগামীকাল আবার আসো 💜");
+  const yesterday=new Date(Date.now()-864e5).toISOString().slice(0,10);
+  streak.count = streak.last===yesterday ? streak.count+1 : 1;
+  streak.last=t;
+  const bonus = 10 + streak.count*5;
+  addCoins(bonus,"Daily reward (day "+streak.count+")");
+  toast("🎁 +"+bonus+" coins! Streak: "+streak.count+" দিন 🔥");
+}
+function buyCoins(packCoins){
+  const p=COIN_PACKS.find(x=>x.coins===packCoins);
+  if(!p) return;
+  // প্রোডাকশন: location.href = "/api/checkout?pack="+p.coins (SSLCOMMERZ/Stripe)
+  addCoins(p.coins,"Coin purchase $"+p.price+" (demo)");
+  toast("🪙 +"+p.coins+" coins! (ডেমো চেকআউট — এখানে SSLCOMMERZ/Stripe বসবে)");
+}
+function checkAchievements(){
+  let newOnes=[];
+  for(const a of ACHIEVEMENTS){
+    if(!claimedAch.includes(a.id) && a.check()){ claimedAch.push(a.id); coins+=a.reward; newOnes.push(a); }
+  }
+  if(newOnes.length){ saveAll(); toast("🏆 "+newOnes.map(a=>a.emoji+" "+a.name).join(", ")+" (+"+newOnes.reduce((s,a)=>s+a.reward,0)+" coins)"); }
+}
+function updateEconomyUI(){
+  $("sidebarCoins").textContent="🪙 "+coins.toLocaleString();
+  if(!$("coinBalance")) return;
+  $("coinBalance").textContent = coins.toLocaleString();
+  $("profileName").textContent = user?.name || "Guest";
+  const lvl=level();
+  $("profileLevel").textContent = "Level "+lvl+" · "+totalMsgs()+" messages · "+xp+" XP";
+  const prev=xpForLevel(lvl), next=xpForLevel(lvl+1);
+  $("xpBar").style.width = Math.min(100,(xp-prev)/(next-prev)*100)+"%";
+  $("streakNum").textContent = streak.count;
+  $("refLink").value = location.origin+location.pathname+"?ref="+referral.code;
+  $("refCount").textContent = referral.count;
+  const claimed = streak.last===today();
+  $("claimBtn").disabled = claimed;
+  $("claimBtn").style.opacity = claimed? .5 : 1;
+  $("claimBtn").textContent = claimed ? "✓ আজকেরটা নেওয়া হয়েছে" : "আজকের বোনাস নিন (+"+(10+(streak.count+1)*5)+")";
+  renderAchievements();
+}
+
+/* ============ SHOP ============ */
+function renderGiftShop(){
+  if(!$("giftShop")) return;
+  $("giftShop").innerHTML = GIFTS.map(g=>`
+    <div class="glass glass-h" style="padding:.75rem;text-align:center;cursor:pointer" onclick="sendGift('${g.id}')" role="button" aria-label="Send ${g.name} for ${g.cost} coins">
+      <div style="font-size:1.8rem">${g.emoji}</div>
+      <div style="font-size:.8rem;font-weight:600;margin-top:.25rem">${g.name}</div>
+      <div class="gtext" style="font-size:.75rem;font-weight:700">🪙 ${g.cost}</div>
+    </div>`).join("");
+}
+function renderCoinPacks(){
+  if(!$("coinPacks")) return;
+  $("coinPacks").innerHTML=COIN_PACKS.map(p=>`
+    <div class="glass glass-h" style="padding:.75rem;text-align:center;cursor:pointer" onclick="buyCoins(${p.coins})" role="button" aria-label="Buy ${p.coins} coins for $${p.price}">
+      <div class="gtext" style="font-size:1.2rem;font-weight:800">🪙 ${p.coins}</div>
+      <div class="muted" style="font-size:.7rem">${p.label}</div>
+      <div style="font-weight:700;font-size:.85rem;margin-top:.25rem">$${p.price}</div>
+    </div>`).join("");
+}
+function renderAchievements(){
+  if(!$("achList")) return;
+  $("achList").innerHTML = ACHIEVEMENTS.map(a=>{
+    const done=a.check();
+    return `<div class="glass" style="padding:.75rem;text-align:center;${done?"border-color:rgba(6,182,212,.5)":"opacity:.45"}">
+      <div style="font-size:1.6rem;${done?"":"filter:grayscale(1)"}">${a.emoji}</div>
+      <div style="font-size:.75rem;font-weight:600;margin-top:.25rem">${a.name}</div>
+      <div class="muted" style="font-size:.65rem">${a.desc}</div>
+      <div style="font-size:.65rem;margin-top:.25rem;color:var(--highlight)">🪙 +${a.reward} ${done?"✓":""}</div>
+    </div>`;
+  }).join("");
+}
+function sendGift(giftId){
+  const g=GIFTS.find(x=>x.id===giftId);
+  if(!g) return;
+  if(!activeChat){
+    const withChat = CHARACTERS.filter(c=>chats[c.id]);
+    if(!withChat.length) return toast("আগে একজন ক্যারেক্টারের সাথে চ্যাট খোলো 💬");
+    activeChat = withChat[withChat.length-1].id;
+  }
+  if(coins<g.cost) return toast("পর্যাপ্ত coin নেই — Daily reward নাও বা বন্ধু refer করো! 🪙");
+  coins-=g.cost;
+  giftsSent.push({gift:giftId,char:activeChat,d:today()});
+  chats[activeChat].push({role:"user",content:g.emoji+" "+g.name+" পাঠিয়েছে"});
+  toast(g.emoji+" "+g.name+" পাঠানো হয়েছে! (−"+g.cost+" coins)");
+  saveAll();
+  setTimeout(()=>{
+    chats[activeChat].push({role:"ai",content:GIFT_REACTIONS[giftId]});
+    saveAll(); renderMsgs(); renderConvList(); updateEconomyUI(); speak(GIFT_REACTIONS[giftId]);
+  },600);
+  updateEconomyUI();
+}
+
+/* ============ CHARACTER CARDS & PROFILE ============ */
+const HEART_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>`;
+function charCardHTML(c){
+  const isFav = favs.includes(c.id);
+  return `<div class="glass glass-h char-card" onclick="openProfile('${c.id}')">
+    <div style="position:relative">
+      ${charImgBlock(c)}
+      <button class="fav ${isFav?"on":""}" onclick="event.stopPropagation();toggleFav('${c.id}')" aria-label="favorite">${HEART_SVG}</button>
+      <div class="char-info">
+        <div style="display:flex;align-items:center;gap:.4rem"><span class="on-dot"></span><b>${c.name}</b>${c.premium?'<span class="badge">Premium</span>':""}</div>
+        <div class="muted" style="font-size:.75rem;margin-top:.15rem">${c.tagline} · ${c.age}</div>
+      </div>
+    </div></div>`;
+}
+function renderChars(){
+  const q=($("searchChars")?.value||"").toLowerCase();
+  const list=CHARACTERS.filter(c=>!q||c.name.toLowerCase().includes(q)||c.tagline.toLowerCase().includes(q));
+  $("discoverChars").innerHTML=list.map(charCardHTML).join("");
+}
+let landingFilter = "all";
+function setLandingFilter(filter){
+  landingFilter = filter;
+  document.querySelectorAll("#landingFilters .filter-chip").forEach(b=>b.classList.toggle("active",b.dataset.filter===filter));
+  renderLanding();
+}
+function renderLanding(){
+  const el=$("landingChars"); if(!el) return;
+  const q=($("landingSearch")?.value||"").toLowerCase().trim();
+  const list=CHARACTERS.filter(c=>{
+    const matchesFilter=landingFilter==="all" || c.traits.some(t=>t.toLowerCase().includes(landingFilter));
+    const matchesSearch=!q || c.name.toLowerCase().includes(q) || c.tagline.toLowerCase().includes(q) || c.bio.toLowerCase().includes(q);
+    return matchesFilter && matchesSearch;
+  });
+  el.innerHTML=list.map(charCardHTML).join("") || `<p class="muted">No companions matched your search.</p>`;
+}
+function renderFavChars(){ $("favChars").innerHTML = CHARACTERS.filter(c=>favs.includes(c.id)).map(charCardHTML).join("") || `<p class="muted">No favorites yet — tap the ♡ on any companion.</p>`; }
+function toggleFav(id){
+  const i=favs.indexOf(id);
+  if(i>=0){favs.splice(i,1);toast("Removed from favorites")}else{favs.push(id);toast("Added to favorites 💜")}
+  saveAll(); renderChars(); renderFavChars(); checkAchievements();
+}
+
+/* ---- Character Profile Modal (cover + gallery + traits) ---- */
+function openProfile(charId){
+  const c = CHARACTERS.find(x=>x.id===charId);
+  const isFav = favs.includes(charId);
+  const coverBlock = c.img?.cover
+    ? `<img src="${c.img.cover}" alt="${c.name} cover" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block" onerror="this.outerHTML='<div class=&quot;char-fallback&quot; style=&quot;aspect-ratio:16/9&quot;>${c.emoji}</div>'">`
+    : `<div class="char-fallback" style="aspect-ratio:16/9">${c.emoji}</div>`;
+  const modal = document.createElement("div");
+  modal.className="modal-bg";
+  modal.onclick = e => { if(e.target===modal) modal.remove(); };
+  modal.innerHTML = `<div class="glass modal fade">
+    <div style="position:relative">
+      ${coverBlock}
+      <div style="position:absolute;bottom:-28px;left:1rem">
+        ${avatarHTML(c,72).replace('class="avatar"','class="avatar" style="width:72px;height:72px;font-size:2rem;border:3px solid var(--bg)"')}
+      </div>
+      <button class="fav ${isFav?"on":""}" style="top:.75rem;right:.75rem" onclick="toggleFav('${c.id}');this.classList.toggle('on')" aria-label="favorite">${HEART_SVG}</button>
+    </div>
+    <div style="padding:2.5rem 1.25rem 1.25rem">
+      <h2>${c.name} <span class="muted" style="font-size:.85rem;font-weight:400">· ${c.age} · AI character</span></h2>
+      <p class="muted" style="margin:.5rem 0 1rem;font-size:.9rem">${c.bio}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem">
+        ${c.traits.map(t=>`<span class="badge">${t}</span>`).join("")}
+      </div>
+      <div class="glass" style="padding:.85rem;margin-bottom:1rem">
+        <div class="muted" style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Appearance</div>
+        <div style="font-size:.85rem">${c.looks.join(" · ")}</div>
+      </div>
+      ${c.img?.gallery?.length ? `<div style="margin-bottom:1.25rem">
+        <div class="muted" style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Gallery</div>
+        <div class="gallery-grid">${c.img.gallery.map(g=>`<img src="${g}" alt="${c.name} gallery photo" loading="lazy" onclick="viewFull('${g}','${c.name}')" onerror="this.remove()">`).join("")}</div>
+      </div>`:""}
+      <button class="btn" style="width:100%" onclick="this.closest('.modal-bg').remove();openChat('${c.id}')">💬 Start Chat with ${c.name}</button>
+    </div></div>`;
+  document.body.appendChild(modal);
+}
+function viewFull(src,name){
+  const m=document.createElement("div");
+  m.className="modal-bg"; m.style.zIndex=150;
+  m.onclick=()=>m.remove();
+  m.innerHTML=`<img src="${src}" alt="${name} — full view" style="max-width:92vw;max-height:92vh;border-radius:1rem;object-fit:contain">`;
+  document.body.appendChild(m);
+}
+
+/* ============ PRICING ============ */
+$("pricingGrid").innerHTML = PLANS.map((p,i)=>`
+  <div class="glass glass-h pricing-card ${i===1?"pro":""}">
+    ${i===1?'<span class="badge">Most Popular</span>':""}
+    <h3 style="margin-top:.5rem">${p.name}</h3>
+    <div class="price gtext">${p.price}<span class="muted" style="font-size:.85rem">/mo</span></div>
+    <div class="muted" style="font-size:.85rem">${p.lim}</div>
+    <ul class="plan-feats">${p.feats.map(f=>`<li>✓ ${f}</li>`).join("")}</ul>
+    <button class="btn ${i===1?"":"btn-ghost"}" style="width:100%" onclick="choosePlan('${p.id}')">${i===0?"Start Free":"Upgrade"}</button>
+  </div>`).join("");
+function choosePlan(id){
+  if(!user) return go("auth");
+  prefs.plan=id; saveAll(); renderPlan();
+  if(id!=="free"){ txns.unshift({d:today(),t:"Subscription: "+id,amt:id==="premium"?9.99:29.99}); saveAll(); renderUsage(); toast("Subscribed to "+id+" 🎉 (ডেমো চেকআউট — এখানে পেমেন্ট গেটওয়ে বসবে)"); }
+}
+
+/* ============ CHAT ============ */
+function openChat(charId){
+  if(!user) return go("auth");
+  const c = CHARACTERS.find(x=>x.id===charId);
+  if(c.premium && prefs.plan==="free"){ toast("Nova requires a Premium plan ✨"); switchTab("credits"); return; }
+  activeChat=charId;
+  if(!chats[charId]) chats[charId]=[{role:"ai",content:c.greeting}];
+  setCompanionMood("happy", true);
+  const art=$("companionArt");
+  if(art){ art.style.display="block"; art.src=c.img?.profile||""; art.alt=`${c.name} — AI companion`; }
+  const mood=$("companionMood");
+  if(mood) mood.textContent=`✨ ${c.name} is here`;
+  $("chatAvatar").innerHTML = c.img?.profile
+    ? `<img src="${c.img.profile}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.remove();this.parentElement.textContent='${c.emoji}'">`
+    : c.emoji;
+  $("chatName").textContent=c.name;
+  $("chatStatus").innerHTML='<span class="on-dot"></span> Online · '+c.tagline;
+  renderConvList(); renderMsgs(); switchTab("chats");
+  saveAll();
+}
+function setCompanionMood(mood="idle", react=false){
+  const stage=$("companionStage"); if(!stage) return;
+  stage.classList.remove("mood-happy","mood-shy","mood-sad","mood-angry","mood-thinking","reacting");
+  if(["happy","shy","sad","angry","thinking"].includes(mood)) stage.classList.add("mood-"+mood);
+  if(react){ stage.classList.add("reacting"); setTimeout(()=>stage.classList.remove("reacting"),750); }
+  const labels={idle:"✨ Listening…",happy:"💜 Happy to see you",shy:"😊 Feeling shy…",sad:"🥺 A little emotional…",angry:"😤 Don't make me mad",thinking:"🤔 Thinking about that…"};
+  const badge=$("companionMood"); if(badge) badge.textContent=labels[mood]||labels.idle;
+}
+function detectMood(text=""){
+  const t=text.toLowerCase();
+  if(/love|ভালোবাস|bhalobash|miss you|মিস|kiss|চুমু|❤️|💕|😍|😘/.test(t)) return "shy";
+  if(/sad|দুঃখ|খারাপ|lonely|একলা|cry|কাঁদ/.test(t)) return "sad";
+  if(/angry|রাগ|রাগী|hate|ঘৃণা/.test(t)) return "angry";
+  if(/think|ভাব|কেন|why|maybe|hmm/.test(t)) return "thinking";
+  return "happy";
+}
+function showHeartBurst(){
+  const box=$("companionHearts"); if(!box) return;
+  for(let i=0;i<5;i++){
+    const h=document.createElement("span"); h.className="float-heart"; h.textContent=i%2?"💕":"💜";
+    h.style.left=(35+Math.random()*30)+"%"; h.style.setProperty("--x",((Math.random()-.5)*120)+"px");
+    h.style.animationDelay=(i*.08)+"s"; box.appendChild(h); setTimeout(()=>h.remove(),1800);
+  }
+}
+
+function renderMsgs(){
+  const box=$("msgs"); if(!activeChat||!chats[activeChat]) return;
+  box.innerHTML = chats[activeChat].map(m=>`<div class="bubble ${m.role==="user"?"user":"ai"}">${esc(m.content)}</div>`).join("");
+  box.scrollTop=box.scrollHeight;
+}
+function renderConvList(){
+  const list=$("convList"); if(!list) return;
+  const items=CHARACTERS.filter(c=>chats[c.id]);
+  list.innerHTML = `<div style="padding:1rem 1rem .5rem;font-weight:700">Conversations</div>` + (items.length?items.map(c=>{
+    const last=chats[c.id][chats[c.id].length-1];
+    return `<div class="conv-item ${activeChat===c.id?"act":""}" onclick="openChat('${c.id}')">
+      ${avatarHTML(c,44)}
+      <div style="min-width:0"><div style="font-weight:600;font-size:.9rem">${c.name}</div>
+      <div class="muted" style="font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(last.content.slice(0,40))}</div></div></div>`;
+  }).join(""):`<p class="muted" style="padding:1rem;font-size:.85rem">No conversations yet</p>`);
+}
+async function sendMsg(){
+  const input=$("msgInput"); const text=input.value.trim();
+  if(!text||!activeChat||isStreaming) return;
+  if(usage.count>=DAILY_LIMIT){ toast("Daily limit reached (100). Upgrade for more 💜"); return; }
+
+  const charId = activeChat;
+  chats[charId].push({role:"user",content:text});
+  setCompanionMood(detectMood(text), true); setCompanionState("thinking", false);
+  usage.count++;
+  input.value=""; saveAll(); renderMsgs(); renderConvList(); renderUsage();
+  addCoins(1,"Message reward");
+
+  isStreaming=true;
+  const box=$("msgs");
+  const typing=document.createElement("div");
+  typing.className="bubble ai"; typing.innerHTML='<span class="dot"></span> <span class="dot"></span> <span class="dot"></span>';
+  box.appendChild(typing); box.scrollTop=box.scrollHeight;
+
+  try{
+    const reply = await getGeminiReply(charId);
+    typing.remove();
+    const replyMood=detectMood(reply);
+    setCompanionMood(replyMood, true);
+    if(replyMood==="happy" || replyMood==="shy") showHeartBurst();
+    setCompanionState(replyMood, false);
+
+    const el=document.createElement("div");
+    el.className="bubble ai";
+    box.appendChild(el);
+
+    // Keep the natural typing animation in the UI.
+    const words=reply.split(/(\s+)/); let i=0;
+    const iv=setInterval(()=>{
+      el.textContent += words[i++] || "";
+      box.scrollTop=box.scrollHeight;
+      if(i>=words.length){
+        clearInterval(iv);
+        chats[charId].push({role:"ai",content:reply});
+        saveAll();
+        renderConvList();
+        isStreaming=false;
+        speak(reply);
+      }
+    },28);
+  }catch(err){
+    console.error(err);
+    typing.remove();
+    isStreaming=false;
+    toast(err.message || "Gemini request failed");
+    renderMsgs();
+  }
+}
+
+/* ============ GEMINI AI ============ */
+async function getGeminiReply(charId){
+  const c=CHARACTERS.find(x=>x.id===charId);
+  if(!c) throw new Error("Companion not found.");
+
+  // Only send the current conversation to your own backend.
+  // The Gemini API key stays on the server and is never exposed in this file.
+  const apiBase=(window.LUNARA_API_URL||"").replace(/\/$/,"");
+  const response=await fetch(`${apiBase}/api/chat`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      character:{
+        id:c.id,
+        name:c.name,
+        age:c.age,
+        bio:c.bio,
+        traits:c.traits,
+        style:c.style,
+        greeting:c.greeting
+      },
+      messages:chats[charId].slice(-20),
+      userName:prefs.name||user?.name||"friend",
+      memories:prefs.memory?memories.slice(-20):[],
+      language:prefs.lang||"en"
+    })
+  });
+
+  let data={};
+  try{ data=await response.json(); }catch{}
+  if(!response.ok) throw new Error(data.error||"Gemini API request failed.");
+  if(!data.reply) throw new Error("Gemini returned an empty reply.");
+  return data.reply;
+}
+
+/* ============ VOICE (TTS) ============ */
+function toggleVoice(){
+  voiceOn=!voiceOn;
+  $("voiceBtn").textContent = voiceOn ? "🔊" : "🔇";
+  toast(voiceOn ? "Voice ON 🔊 — সে এখন কথা বলবে!" : "Voice OFF 🔇");
+  if(!voiceOn) stopVoice();
+}
+function speak(text){
+  if(!voiceOn || !("speechSynthesis" in window)) return;
+  stopVoice();
+  const u=new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,"").trim());
+  const isBn=/[\u0980-\u09FF]/.test(text);
+  u.lang = isBn ? "bn-BD" : (prefs.lang==="bn"?"bn-BD":"en-US");
+  u.rate = parseFloat(prefs.voiceRate)||1;
+  u.pitch = 1.15;
+  speechSynthesis.speak(u);
+}
+function stopVoice(){ if("speechSynthesis" in window) speechSynthesis.cancel(); }
+
+/* ============ MEMORY / SETTINGS ============ */
+function renderMemories(){
+  if(!$("memoryList")) return;
+  $("memToggle").checked=prefs.memory;
+  $("setName").value=prefs.name||""; $("setLang").value=prefs.lang; $("setVoice").value=String(prefs.voiceRate||1);
+  $("memoryList").innerHTML = memories.length
+    ? memories.map((m,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.5rem 0;border-bottom:1px solid var(--glass-border);font-size:.85rem"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis">🧠 ${esc(m)}</span><button class="btn btn-ghost" style="padding:.2rem .6rem;font-size:.75rem" onclick="delMemory(${i})" aria-label="Delete memory">✕</button></div>`).join("")
+    : `<p class="muted" style="font-size:.85rem">No memories yet. She'll learn as you chat, or add your own below.</p>`;
+}
+function addMemory(){ const v=$("newMemory").value.trim(); if(!v)return; memories.push(v.slice(0,200)); $("newMemory").value=""; saveAll(); renderMemories(); toast("Memory added 🧠"); }
+function delMemory(i){ memories.splice(i,1); saveAll(); renderMemories(); toast("Memory deleted"); }
+function saveSetting(k,v){ prefs[k]= (k==="memory") ? !!v : v; saveAll(); if(k==="name"||k==="lang")toast("Saved ✓"); }
+function renderPlan(){ if(!$("planInfo"))return; const p=PLANS.find(x=>x.id===(prefs.plan||"free")); $("planInfo").textContent=`Current plan: ${p.name} — ${p.lim}. Upgrade from the landing page pricing section.`; }
+function wipeAll(){
+  if(!confirm("সব চ্যাট, মেমোরি, coin — সবকিছু মুছে যাবে। নিশ্চিত?")) return;
+  ["chats","favs","memories","usage","txns","coins","xp","streak","giftsSent","claimedAch"].forEach(k=>localStorage.removeItem("ln_"+k));
+  chats={};favs=[];memories=[];usage={date:today(),count:0};txns=[];coins=STARTING_COINS;xp=0;streak={count:0,last:""};giftsSent=[];claimedAch=[];
+  activeChat=null; saveAll();
+  $("msgs").innerHTML='<p class="muted" style="margin:auto;text-align:center">Choose a companion from Discover to start chatting 💜</p>';
+  renderConvList(); renderChars(); updateEconomyUI(); renderMemories(); toast("সব ডেটা মুছে ফেলা হয়েছে");
+}
+
+/* ============ CREDITS ============ */
+function renderUsage(){
+  if(!$("usageText"))return;
+  $("usageText").textContent=`${usage.count} / ${DAILY_LIMIT} messages used today`;
+  $("usageBar").style.width=Math.min(100,usage.count/DAILY_LIMIT*100)+"%";
+  $("txnList").innerHTML = txns.slice(0,12).map(t=>`<div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--glass-border)"><span>${esc(t.t)}</span><span class="muted">${t.d}${t.amt?` · $${t.amt}`:""}</span></div>`).join("") || "No transactions yet.";
+}
+
+/* ============ INIT ============ */
+function renderNav(){
+  $("navAuth").innerHTML = user
+    ? `<button class="btn" onclick="enterApp()">Open App</button>`
+    : `<button class="btn btn-ghost" onclick="openAuthMode('login')">Log in</button><button class="btn" onclick="openAuthMode('register')">Sign up</button>`;
+}
+initReferral();
+renderNav();
+renderLanding();
+
+/* ===== LUNARA PRO COMPANION CONTROLLER ===== */
+function setCompanionState(state="ready", speaking=false){
+  const stage=document.getElementById("companionStage"); if(!stage)return;
+  stage.classList.toggle("speaking",!!speaking); stage.classList.toggle("thinking",state==="thinking");
+  const label=document.getElementById("companionStatusText");
+  if(label) label.textContent = speaking ? "Luna is speaking…" : ({thinking:"Thinking…",ready:"Ready to chat",happy:"Feeling happy",shy:"A little shy",sad:"Feeling a little low",angry:"A bit annoyed"}[state]||"Ready to chat");
+}
+function companionVoice(text){
+  if(!('speechSynthesis' in window) || !text) return;
+  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.rate=.98; u.pitch=1.08; u.onstart=()=>setCompanionState("ready",true); u.onend=()=>setCompanionState("ready",false); u.onerror=()=>setCompanionState("ready",false); speechSynthesis.speak(u); }catch(e){setCompanionState("ready",false)}
+}
+
+</script>
+</body>
+</html>
