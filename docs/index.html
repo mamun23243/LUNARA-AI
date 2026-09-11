@@ -241,36 +241,6 @@ footer{border-top:1px solid var(--glass-border);padding:2.5rem 0;color:var(--mut
   #navAuth .btn{padding:.5rem .7rem;font-size:.8rem;}
 }
 
-
-/* ===== LOGIN / SIGN UP: FIXED TOP-RIGHT ===== */
-#navAuth{
-  position:fixed !important;
-  top:12px !important;
-  right:16px !important;
-  z-index:99999 !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:flex-end !important;
-  gap:8px !important;
-  margin:0 !important;
-}
-#navAuth .btn{
-  min-width:78px;
-  white-space:nowrap;
-}
-@media(max-width:520px){
-  #navAuth{
-    top:9px !important;
-    right:9px !important;
-    gap:5px !important;
-  }
-  #navAuth .btn{
-    min-width:auto;
-    padding:.48rem .68rem;
-    font-size:.78rem;
-  }
-}
-
 </style>
 <script src="./config.js">
 /* ===== LUNARA PRO COMPANION CONTROLLER ===== */
@@ -454,13 +424,7 @@ function companionVoice(text){
             <div style="flex:1;min-width:0"><div id="chatName" style="font-weight:700">Pick a companion</div><div class="muted" style="font-size:.75rem" id="chatStatus"></div></div>
             <button class="btn btn-ghost" style="padding:.4rem .7rem;font-size:.8rem" id="voiceBtn" onclick="toggleVoice()" title="Voice on/off">🔇</button>
           </div>
-          <div class="companion-stage" id="companionStage" aria-label="Animated AI companion">
-            <div class="companion-badge" id="companionMood">✨ Ready to chat</div>
-            <img class="companion-art" id="companionArt" src="" alt="AI companion" loading="eager" onerror="this.style.display='none'">
-            <div class="companion-hearts" id="companionHearts"></div>
-       <div class="companion-status"><span class="companion-dot"></span><span id="companionStatusText">Ready to chat</span></div>
-       <div class="companion-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-          </div>
+          <div class="chat-ready" id="chatReady">✨ Ready to chat</div>
           <div class="msgs" id="msgs"><p class="muted" style="margin:auto;text-align:center">Choose a companion from Discover to start chatting 💜</p></div>
           <div class="composer">
             <textarea class="inp" id="msgInput" rows="1" placeholder="Type a message… (Enter to send)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
@@ -1055,11 +1019,8 @@ function openChat(charId){
   if(c.premium && prefs.plan==="free"){ toast("Nova requires a Premium plan ✨"); switchTab("credits"); return; }
   activeChat=charId;
   if(!chats[charId]) chats[charId]=[{role:"ai",content:c.greeting}];
-  setCompanionMood("happy", true);
-  const art=$("companionArt");
-  if(art){ art.style.display="block"; art.src=c.img?.profile||""; art.alt=`${c.name} — AI companion`; }
-  const mood=$("companionMood");
-  if(mood) mood.textContent=`✨ ${c.name} is here`;
+  const ready=$("chatReady");
+  if(ready) ready.textContent=`✨ ${c.name} is ready to chat`;
   $("chatAvatar").innerHTML = c.img?.profile
     ? `<img src="${c.img.profile}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.remove();this.parentElement.textContent='${c.emoji}'">`
     : c.emoji;
