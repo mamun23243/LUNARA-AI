@@ -207,10 +207,7 @@ footer{border-top:1px solid var(--glass-border);padding:2.5rem 0;color:var(--mut
 @media(max-width:640px){.companion-stage{min-height:260px}.companion-art{height:245px;width:68%}.companion-status{left:10px;bottom:10px}.companion-wave{right:10px;bottom:10px}}
 
 
-/* ===== STATIC COMPANION PICTURE FIX =====
-   Keep the character image completely still.
-   Other UI/mood/status effects remain unchanged.
-*/
+/* ===== STATIC COMPANION PICTURE FIX ===== */
 .companion-art,
 .companion-stage.mood-happy .companion-art,
 .companion-stage.mood-shy .companion-art,
@@ -222,6 +219,56 @@ footer{border-top:1px solid var(--glass-border);padding:2.5rem 0;color:var(--mut
 .companion-stage.thinking .companion-art {
   animation: none !important;
   transform: none !important;
+}
+
+
+/* ===== AUTH BUTTON VISIBILITY ===== */
+#navAuth .btn { min-width: 82px; }
+@media(max-width:520px){
+  #navAuth .btn { min-width:0; padding:.55rem .8rem; font-size:.82rem; }
+}
+
+
+/* ===== TOP RIGHT AUTH ===== */
+#navAuth{
+  display:flex !important;
+  align-items:center;
+  justify-content:flex-end;
+  gap:.55rem;
+}
+@media(max-width:520px){
+  #navAuth{gap:.35rem;}
+  #navAuth .btn{padding:.5rem .7rem;font-size:.8rem;}
+}
+
+
+/* ===== LOGIN / SIGN UP: FIXED TOP-RIGHT ===== */
+#navAuth{
+  position:fixed !important;
+  top:12px !important;
+  right:16px !important;
+  z-index:99999 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+  margin:0 !important;
+}
+#navAuth .btn{
+  min-width:78px;
+  white-space:nowrap;
+}
+@media(max-width:520px){
+  #navAuth{
+    top:9px !important;
+    right:9px !important;
+    gap:5px !important;
+  }
+  #navAuth .btn{
+    min-width:auto;
+    padding:.48rem .68rem;
+    font-size:.78rem;
+  }
 }
 
 </style>
@@ -262,7 +309,7 @@ function companionVoice(text){
       </h1>
       <p>Choose a fictional adult AI companion with her own personality, memory, voice and conversation style.</p>
       <div class="hero-actions">
-        <button class="btn" onclick="go('auth')">Start Chatting →</button>
+        <button class="btn" onclick="openAuthMode('login')">Start Chatting →</button>
         <button class="btn btn-ghost" onclick="document.getElementById('companions').scrollIntoView({behavior:'smooth'})">Explore Companions</button>
       </div>
       <div class="stats" style="max-width:620px;margin-top:2rem">
@@ -708,6 +755,7 @@ function openAuthMode(mode){
   authMode = mode === "register" ? "register" : "login";
   go("auth");
   updateAuthUI();
+  setTimeout(()=>$("aEmail")?.focus(),50);
 }
 function updateAuthUI(){
   $("authTitle").textContent = authMode === "login" ? "Welcome back" : "Create your account";
@@ -722,33 +770,69 @@ function toggleAuthMode(){
   updateAuthUI();
 }
 function submitAuth(){
-  const email=$("aEmail").value.trim().toLowerCase(), pass=$("aPass").value, name=$("aName").value.trim();
+  const email=$("aEmail").value.trim().toLowerCase();
+  const pass=$("aPass").value;
+  const name=$("aName").value.trim();
   const err=$("authErr");
-  if(!/^\S+@\S+\.\S+$/.test(email)) return err.textContent="Please enter a valid email.";
-  if(pass.length<8) return err.textContent="Password must be at least 8 characters.";
+  err.textContent="";
+
+  if(!/^\S+@\S+\.\S+$/.test(email))
+    return err.textContent="Please enter a valid email.";
+  if(pass.length<8)
+    return err.textContent="Password must be at least 8 characters.";
+
   const users = store.get("users",{});
+
   if(authMode==="register"){
-    if(users[email]) return err.textContent="An account with this email already exists.";
-    users[email]={name:name||email.split("@")[0]}; store.set("users",users);
+    if(users[email])
+      return err.textContent="An account with this email already exists.";
+
+    const displayName=name||email.split("@")[0];
+    users[email]={name:displayName,password:pass};
+    store.set("users",users);
+
     onNewUserRegistered();
-    login({email,name:name||email.split("@")[0]});
+    login({email,name:displayName});
+    toast("Account created successfully 💜");
   }else{
-    if(!users[email]) return err.textContent="No account found. Please register first.";
-    login({email,name:users[email].name});
+    const account=users[email];
+    if(!account)
+      return err.textContent="No account found. Please sign up first.";
+    if(account.password && account.password!==pass)
+      return err.textContent="Incorrect password.";
+
+    login({email,name:account.name||email.split("@")[0]});
   }
 }
-function demoLogin(){ onNewUserRegistered(); login({email:"demo@lunara.ai",name:"Demo User"}); }
-function login(u){ user=u; store.set("user",u); prefs.name=prefs.name||u.name; saveAll(); enterApp(); toast("Welcome, "+u.name+" 💜"); }
-function logout(){ user=null; store.set("user",null); $("app").classList.remove("active"); stopVoice(); go("landing"); toast("Logged out"); }
 
-/* ============ REFERRAL ============ */
-function initReferral(){
-  if(!referral.code){
-    referral.code = "LUNARA-" + Math.random().toString(36).slice(2,8).toUpperCase();
-    store.set("referral",referral);
+function demoLogin(){
+  const users=store.get("users",{});
+  if(!users["demo@lunara.ai"]){
+    users["demo@lunara.ai"]={name:"Demo User",password:"demo12345"};
+    store.set("users",users);
   }
-  const urlRef = new URLSearchParams(location.search).get("ref");
-  if(urlRef && !user){ store.set("pendingRef",urlRef); toast("🔗 Referral code apply হবে রেজিস্টার করার পর!") }
+  onNewUserRegistered();
+  login({email:"demo@lunara.ai",name:"Demo User"});
+}
+
+function login(u){
+  user=u;
+  store.set("user",u);
+  prefs.name=prefs.name||u.name;
+  saveAll();
+  enterApp();
+  renderNav();
+  toast("Welcome, "+u.name+" 💜");
+}
+
+function logout(){
+  user=null;
+  store.set("user",null);
+  $("app").classList.remove("active");
+  stopVoice();
+  go("landing");
+  renderNav();
+  toast("Logged out");
 }
 function onNewUserRegistered(){
   const pendingRef = store.get("pendingRef",null);
@@ -1166,10 +1250,12 @@ function renderUsage(){
 function renderNav(){
   $("navAuth").innerHTML = user
     ? `<button class="btn" onclick="enterApp()">Open App</button>`
-    : `<button class="btn btn-ghost" onclick="openAuthMode('login')">Log in</button><button class="btn" onclick="openAuthMode('register')">Sign up</button>`;
+    : `<button class="btn btn-ghost" onclick="openAuthMode('login')">Log in</button>
+       <button class="btn" onclick="openAuthMode('register')">Sign up</button>`;
 }
 initReferral();
 renderNav();
+updateAuthUI();
 renderLanding();
 </script>
 </body>
