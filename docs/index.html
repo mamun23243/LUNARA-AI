@@ -206,6 +206,24 @@ footer{border-top:1px solid var(--glass-border);padding:2.5rem 0;color:var(--mut
 @media(prefers-reduced-motion:reduce){.companion-art,.companion-stage:before,.companion-dot,.companion-wave i{animation:none!important}.message{animation:none!important}}
 @media(max-width:640px){.companion-stage{min-height:260px}.companion-art{height:245px;width:68%}.companion-status{left:10px;bottom:10px}.companion-wave{right:10px;bottom:10px}}
 
+
+/* ===== STATIC COMPANION PICTURE FIX =====
+   Keep the character image completely still.
+   Other UI/mood/status effects remain unchanged.
+*/
+.companion-art,
+.companion-stage.mood-happy .companion-art,
+.companion-stage.mood-shy .companion-art,
+.companion-stage.mood-sad .companion-art,
+.companion-stage.mood-angry .companion-art,
+.companion-stage.mood-thinking .companion-art,
+.companion-stage.reacting .companion-art,
+.companion-stage.speaking .companion-art,
+.companion-stage.thinking .companion-art {
+  animation: none !important;
+  transform: none !important;
+}
+
 </style>
 <script src="./config.js">
 /* ===== LUNARA PRO COMPANION CONTROLLER ===== */
