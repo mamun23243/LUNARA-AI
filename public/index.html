@@ -206,7 +206,56 @@ footer{border-top:1px solid var(--glass-border);padding:2.5rem 0;color:var(--mut
 @media(prefers-reduced-motion:reduce){.companion-art,.companion-stage:before,.companion-dot,.companion-wave i{animation:none!important}.message{animation:none!important}}
 @media(max-width:640px){.companion-stage{min-height:260px}.companion-art{height:245px;width:68%}.companion-status{left:10px;bottom:10px}.companion-wave{right:10px;bottom:10px}}
 
+
+/* ===== STATIC COMPANION PICTURE FIX ===== */
+.companion-art,
+.companion-stage.mood-happy .companion-art,
+.companion-stage.mood-shy .companion-art,
+.companion-stage.mood-sad .companion-art,
+.companion-stage.mood-angry .companion-art,
+.companion-stage.mood-thinking .companion-art,
+.companion-stage.reacting .companion-art,
+.companion-stage.speaking .companion-art,
+.companion-stage.thinking .companion-art {
+  animation: none !important;
+  transform: none !important;
+}
+
+
+/* ===== AUTH BUTTON VISIBILITY ===== */
+#navAuth .btn { min-width: 82px; }
+@media(max-width:520px){
+  #navAuth .btn { min-width:0; padding:.55rem .8rem; font-size:.82rem; }
+}
+
+
+/* ===== TOP RIGHT AUTH ===== */
+#navAuth{
+  display:flex !important;
+  align-items:center;
+  justify-content:flex-end;
+  gap:.55rem;
+}
+@media(max-width:520px){
+  #navAuth{gap:.35rem;}
+  #navAuth .btn{padding:.5rem .7rem;font-size:.8rem;}
+}
+
 </style>
+<script src="./config.js">
+/* ===== LUNARA PRO COMPANION CONTROLLER ===== */
+function setCompanionState(state="ready", speaking=false){
+  const stage=document.getElementById("companionStage"); if(!stage)return;
+  stage.classList.toggle("speaking",!!speaking); stage.classList.toggle("thinking",state==="thinking");
+  const label=document.getElementById("companionStatusText");
+  if(label) label.textContent = speaking ? "Luna is speaking…" : ({thinking:"Thinking…",ready:"Ready to chat",happy:"Feeling happy",shy:"A little shy",sad:"Feeling a little low",angry:"A bit annoyed"}[state]||"Ready to chat");
+}
+function companionVoice(text){
+  if(!('speechSynthesis' in window) || !text) return;
+  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.rate=.98; u.pitch=1.08; u.onstart=()=>setCompanionState("ready",true); u.onend=()=>setCompanionState("ready",false); u.onerror=()=>setCompanionState("ready",false); speechSynthesis.speak(u); }catch(e){setCompanionState("ready",false)}
+}
+
+</script>
 </head>
 <body>
 <div class="ambient-orb orb-a"></div>
@@ -230,7 +279,7 @@ footer{border-top:1px solid var(--glass-border);padding:2.5rem 0;color:var(--mut
       </h1>
       <p>Choose a fictional adult AI companion with her own personality, memory, voice and conversation style.</p>
       <div class="hero-actions">
-        <button class="btn" onclick="go('auth')">Start Chatting →</button>
+        <button class="btn" onclick="openAuthMode('login')">Start Chatting →</button>
         <button class="btn btn-ghost" onclick="document.getElementById('companions').scrollIntoView({behavior:'smooth'})">Explore Companions</button>
       </div>
       <div class="stats" style="max-width:620px;margin-top:2rem">
@@ -333,7 +382,6 @@ footer{border-top:1px solid var(--glass-border);padding:2.5rem 0;color:var(--mut
         <span id="authSwitchText">Don't have an account?</span>
         <a href="#" style="color:var(--highlight)" onclick="toggleAuthMode();return false" id="authSwitchLink">Register</a>
       </p>
-      <button class="btn btn-ghost" style="width:100%;margin-top:.75rem" onclick="demoLogin()">⚡ Continue as Demo User</button>
       <p class="muted" style="text-align:center;margin-top:1rem;font-size:.7rem">By continuing you confirm you are 18+ and agree to our Terms & Privacy Policy.</p>
     </div>
   </div>
@@ -375,13 +423,7 @@ footer{border-top:1px solid var(--glass-border);padding:2.5rem 0;color:var(--mut
             <div style="flex:1;min-width:0"><div id="chatName" style="font-weight:700">Pick a companion</div><div class="muted" style="font-size:.75rem" id="chatStatus"></div></div>
             <button class="btn btn-ghost" style="padding:.4rem .7rem;font-size:.8rem" id="voiceBtn" onclick="toggleVoice()" title="Voice on/off">🔇</button>
           </div>
-          <div class="companion-stage" id="companionStage" aria-label="Animated AI companion">
-            <div class="companion-badge" id="companionMood">✨ Ready to chat</div>
-            <img class="companion-art" id="companionArt" src="" alt="AI companion" loading="eager" onerror="this.style.display='none'">
-            <div class="companion-hearts" id="companionHearts"></div>
-       <div class="companion-status"><span class="companion-dot"></span><span id="companionStatusText">Ready to chat</span></div>
-       <div class="companion-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-          </div>
+          <div class="chat-ready" id="chatReady">✨ Ready to chat</div>
           <div class="msgs" id="msgs"><p class="muted" style="margin:auto;text-align:center">Choose a companion from Discover to start chatting 💜</p></div>
           <div class="composer">
             <textarea class="inp" id="msgInput" rows="1" placeholder="Type a message… (Enter to send)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
@@ -676,6 +718,7 @@ function openAuthMode(mode){
   authMode = mode === "register" ? "register" : "login";
   go("auth");
   updateAuthUI();
+  setTimeout(()=>$("aEmail")?.focus(),50);
 }
 function updateAuthUI(){
   $("authTitle").textContent = authMode === "login" ? "Welcome back" : "Create your account";
@@ -690,33 +733,69 @@ function toggleAuthMode(){
   updateAuthUI();
 }
 function submitAuth(){
-  const email=$("aEmail").value.trim().toLowerCase(), pass=$("aPass").value, name=$("aName").value.trim();
+  const email=$("aEmail").value.trim().toLowerCase();
+  const pass=$("aPass").value;
+  const name=$("aName").value.trim();
   const err=$("authErr");
-  if(!/^\S+@\S+\.\S+$/.test(email)) return err.textContent="Please enter a valid email.";
-  if(pass.length<8) return err.textContent="Password must be at least 8 characters.";
+  err.textContent="";
+
+  if(!/^\S+@\S+\.\S+$/.test(email))
+    return err.textContent="Please enter a valid email.";
+  if(pass.length<8)
+    return err.textContent="Password must be at least 8 characters.";
+
   const users = store.get("users",{});
+
   if(authMode==="register"){
-    if(users[email]) return err.textContent="An account with this email already exists.";
-    users[email]={name:name||email.split("@")[0]}; store.set("users",users);
+    if(users[email])
+      return err.textContent="An account with this email already exists.";
+
+    const displayName=name||email.split("@")[0];
+    users[email]={name:displayName,password:pass};
+    store.set("users",users);
+
     onNewUserRegistered();
-    login({email,name:name||email.split("@")[0]});
+    login({email,name:displayName});
+    toast("Account created successfully 💜");
   }else{
-    if(!users[email]) return err.textContent="No account found. Please register first.";
-    login({email,name:users[email].name});
+    const account=users[email];
+    if(!account)
+      return err.textContent="No account found. Please sign up first.";
+    if(account.password && account.password!==pass)
+      return err.textContent="Incorrect password.";
+
+    login({email,name:account.name||email.split("@")[0]});
   }
 }
-function demoLogin(){ onNewUserRegistered(); login({email:"demo@lunara.ai",name:"Demo User"}); }
-function login(u){ user=u; store.set("user",u); prefs.name=prefs.name||u.name; saveAll(); enterApp(); toast("Welcome, "+u.name+" 💜"); }
-function logout(){ user=null; store.set("user",null); $("app").classList.remove("active"); stopVoice(); go("landing"); toast("Logged out"); }
 
-/* ============ REFERRAL ============ */
-function initReferral(){
-  if(!referral.code){
-    referral.code = "LUNARA-" + Math.random().toString(36).slice(2,8).toUpperCase();
-    store.set("referral",referral);
+function demoLogin(){
+  const users=store.get("users",{});
+  if(!users["demo@lunara.ai"]){
+    users["demo@lunara.ai"]={name:"Demo User",password:"demo12345"};
+    store.set("users",users);
   }
-  const urlRef = new URLSearchParams(location.search).get("ref");
-  if(urlRef && !user){ store.set("pendingRef",urlRef); toast("🔗 Referral code apply হবে রেজিস্টার করার পর!") }
+  onNewUserRegistered();
+  login({email:"demo@lunara.ai",name:"Demo User"});
+}
+
+function login(u){
+  user=u;
+  store.set("user",u);
+  prefs.name=prefs.name||u.name;
+  saveAll();
+  enterApp();
+  renderNav();
+  toast("Welcome, "+u.name+" 💜");
+}
+
+function logout(){
+  user=null;
+  store.set("user",null);
+  $("app").classList.remove("active");
+  stopVoice();
+  go("landing");
+  renderNav();
+  toast("Logged out");
 }
 function onNewUserRegistered(){
   const pendingRef = store.get("pendingRef",null);
@@ -939,11 +1018,8 @@ function openChat(charId){
   if(c.premium && prefs.plan==="free"){ toast("Nova requires a Premium plan ✨"); switchTab("credits"); return; }
   activeChat=charId;
   if(!chats[charId]) chats[charId]=[{role:"ai",content:c.greeting}];
-  setCompanionMood("happy", true);
-  const art=$("companionArt");
-  if(art){ art.style.display="block"; art.src=c.img?.profile||""; art.alt=`${c.name} — AI companion`; }
-  const mood=$("companionMood");
-  if(mood) mood.textContent=`✨ ${c.name} is here`;
+  const ready=$("chatReady");
+  if(ready) ready.textContent=`✨ ${c.name} is ready to chat`;
   $("chatAvatar").innerHTML = c.img?.profile
     ? `<img src="${c.img.profile}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.remove();this.parentElement.textContent='${c.emoji}'">`
     : c.emoji;
@@ -1132,26 +1208,14 @@ function renderUsage(){
 
 /* ============ INIT ============ */
 function renderNav(){
-  $("navAuth").innerHTML = user
-    ? `<button class="btn" onclick="enterApp()">Open App</button>`
-    : `<button class="btn btn-ghost" onclick="openAuthMode('login')">Log in</button><button class="btn" onclick="openAuthMode('register')">Sign up</button>`;
+  $("navAuth").innerHTML =
+    `<button class="btn btn-ghost" onclick="openAuthMode('login')">Log in</button>
+     <button class="btn" onclick="openAuthMode('register')">Sign up</button>`;
 }
 initReferral();
 renderNav();
+updateAuthUI();
 renderLanding();
-
-/* ===== LUNARA PRO COMPANION CONTROLLER ===== */
-function setCompanionState(state="ready", speaking=false){
-  const stage=document.getElementById("companionStage"); if(!stage)return;
-  stage.classList.toggle("speaking",!!speaking); stage.classList.toggle("thinking",state==="thinking");
-  const label=document.getElementById("companionStatusText");
-  if(label) label.textContent = speaking ? "Luna is speaking…" : ({thinking:"Thinking…",ready:"Ready to chat",happy:"Feeling happy",shy:"A little shy",sad:"Feeling a little low",angry:"A bit annoyed"}[state]||"Ready to chat");
-}
-function companionVoice(text){
-  if(!('speechSynthesis' in window) || !text) return;
-  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.rate=.98; u.pitch=1.08; u.onstart=()=>setCompanionState("ready",true); u.onend=()=>setCompanionState("ready",false); u.onerror=()=>setCompanionState("ready",false); speechSynthesis.speak(u); }catch(e){setCompanionState("ready",false)}
-}
-
 </script>
 </body>
 </html>
